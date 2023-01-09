@@ -1,0 +1,4 @@
+{"instance": {"reviewtext": "Dogs loved them, have two boxer crosses. Reward them wirh these treats."}, "prediction": {"confidences": [0.9703752398490906, 0.029624760150909424], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "I like this litter as it's recycled paper and if no one uses recycled paper then the industry ceases to exist and it all goes to landfill"}, "prediction": {"confidences": [0.04105764627456665, 0.9589423537254333], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "Lightweight, good quality"}, "prediction": {"confidences": [0.9731380939483643, 0.026861906051635742], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "My two cats are four years old and still behave like kittens, yet they have showed no interest in this toy."}, "prediction": {"confidences": [0.39044058322906494, 0.6095594167709351], "displayNames": ["1", "0"]}}

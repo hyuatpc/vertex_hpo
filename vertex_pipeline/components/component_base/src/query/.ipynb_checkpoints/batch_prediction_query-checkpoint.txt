@@ -1,0 +1,4 @@
+SELECT
+reviewtext
+FROM petcircle-science-playground.datalake.review_product_2013_2022
+LIMIT 20

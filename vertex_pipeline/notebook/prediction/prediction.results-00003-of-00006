@@ -1,0 +1,4 @@
+{"instance": {"reviewtext": "cat loves it but the plastic edging fell off on day one!!!!!! pushed it back on but still falls off."}, "prediction": {"confidences": [0.03935691714286804, 0.960643082857132], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "Best price I have found and it gets delivered to your door! The delivery man followed my instructions to a T!"}, "prediction": {"confidences": [0.9477263689041138, 0.05227363109588623], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "Great and prompt service"}, "prediction": {"confidences": [0.9972686767578125, 0.0027313232421875], "displayNames": ["1", "0"]}}
+{"instance": {"reviewtext": "Great and prompt service"}, "prediction": {"confidences": [0.9972686767578125, 0.0027313232421875], "displayNames": ["1", "0"]}}

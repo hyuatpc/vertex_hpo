@@ -1,0 +1,561 @@
+{
+  "pipelineSpec": {
+    "components": {
+      "comp-check-model-metrics": {
+        "executorLabel": "exec-check-model-metrics",
+        "inputDefinitions": {
+          "artifacts": {
+            "basic_metrics": {
+              "artifactType": {
+                "schemaTitle": "system.Metrics",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          },
+          "parameters": {
+            "metrics_name": {
+              "type": "STRING"
+            },
+            "metrics_threshold": {
+              "type": "DOUBLE"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "is_better_metrics": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-data-preprocess": {
+        "executorLabel": "exec-data-preprocess",
+        "inputDefinitions": {
+          "parameters": {
+            "data_region": {
+              "type": "STRING"
+            },
+            "gcs_output_folder": {
+              "type": "STRING"
+            },
+            "gcs_output_format": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "task_type": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "artifacts": {
+            "output_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          }
+        }
+      },
+      "comp-train-model": {
+        "executorLabel": "exec-train-model",
+        "inputDefinitions": {
+          "artifacts": {
+            "input_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          },
+          "parameters": {
+            "accelerator_count": {
+              "type": "INT"
+            },
+            "accelerator_type": {
+              "type": "STRING"
+            },
+            "custom_job_service_account": {
+              "type": "STRING"
+            },
+            "data_pipeline_root": {
+              "type": "STRING"
+            },
+            "data_region": {
+              "type": "STRING"
+            },
+            "hp_config_max_trials": {
+              "type": "INT"
+            },
+            "hp_config_suggestions_per_request": {
+              "type": "INT"
+            },
+            "hptune_region": {
+              "type": "STRING"
+            },
+            "input_data_schema": {
+              "type": "STRING"
+            },
+            "machine_type": {
+              "type": "STRING"
+            },
+            "output_model_file_name": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "serving_container_image_uri": {
+              "type": "STRING"
+            },
+            "training_container_image_uri": {
+              "type": "STRING"
+            },
+            "vpc_network": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "artifacts": {
+            "basic_metrics": {
+              "artifactType": {
+                "schemaTitle": "system.Metrics",
+                "schemaVersion": "0.0.1"
+              }
+            },
+            "classification_metrics": {
+              "artifactType": {
+                "schemaTitle": "system.ClassificationMetrics",
+                "schemaVersion": "0.0.1"
+              }
+            },
+            "feature_importance_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            },
+            "instance_schema": {
+              "artifactType": {
+                "schemaTitle": "system.Artifact",
+                "schemaVersion": "0.0.1"
+              }
+            },
+            "output_model": {
+              "artifactType": {
+                "schemaTitle": "system.Model",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          }
+        }
+      }
+    },
+    "deploymentSpec": {
+      "executors": {
+        "exec-check-model-metrics": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "check_metrics",
+              "--metrics-name-path",
+              "{{$.inputs.parameters['metrics_name']}}",
+              "--metrics-threshold-path",
+              "{{$.inputs.parameters['metrics_threshold']}}",
+              "--basic-metrics",
+              "{{$.inputs.artifacts['basic_metrics'].path}}",
+              "--is-better-metrics",
+              "{{$.outputs.parameters['is_better_metrics'].output_file}}"
+            ],
+            "command": [
+              "python",
+              "/pipelines/component/src/metrics.py"
+            ],
+            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+          }
+        },
+        "exec-data-preprocess": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "preprocess_data",
+              "--project-id",
+              "{{$.inputs.parameters['project_id']}}",
+              "--data-region",
+              "{{$.inputs.parameters['data_region']}}",
+              "--gcs-output-folder",
+              "{{$.inputs.parameters['gcs_output_folder']}}",
+              "--gcs-output-format",
+              "{{$.inputs.parameters['gcs_output_format']}}",
+              "--input-dataset",
+              "--output-dataset",
+              "{{$.outputs.artifacts['output_dataset'].path}}",
+              "--task-type",
+              "{{$.inputs.parameters['task_type']}}"
+            ],
+            "command": [
+              "python",
+              "/pipelines/component/src/preprocess.py"
+            ],
+            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+          }
+        },
+        "exec-train-model": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "train_model",
+              "--project-id",
+              "{{$.inputs.parameters['project_id']}}",
+              "--data-region",
+              "{{$.inputs.parameters['data_region']}}",
+              "--hptune-region",
+              "{{$.inputs.parameters['hptune_region']}}",
+              "--data-pipeline-root",
+              "{{$.inputs.parameters['data_pipeline_root']}}",
+              "--training-container-image-uri",
+              "{{$.inputs.parameters['training_container_image_uri']}}",
+              "--serving-container-image-uri",
+              "{{$.inputs.parameters['serving_container_image_uri']}}",
+              "--custom-job-service-account",
+              "{{$.inputs.parameters['custom_job_service_account']}}",
+              "--machine-type",
+              "{{$.inputs.parameters['machine_type']}}",
+              "--accelerator-type",
+              "{{$.inputs.parameters['accelerator_type']}}",
+              "--accelerator-count",
+              "{{$.inputs.parameters['accelerator_count']}}",
+              "--input-dataset",
+              "{{$.inputs.artifacts['input_dataset'].path}}",
+              "--input_data_schema",
+              "{{$.inputs.parameters['input_data_schema']}}",
+              "--output-model",
+              "{{$.outputs.artifacts['output_model'].path}}",
+              "--basic-metrics",
+              "{{$.outputs.artifacts['basic_metrics'].path}}",
+              "--classification-metrics",
+              "{{$.outputs.artifacts['classification_metrics'].path}}",
+              "--feature-importance-dataset",
+              "{{$.outputs.artifacts['feature_importance_dataset'].path}}",
+              "--instance-schema-dataset",
+              "{{$.outputs.artifacts['instance_schema'].path}}",
+              "--vpc-network",
+              "{{$.inputs.parameters['vpc_network']}}",
+              "--output_model_file_name",
+              "{{$.inputs.parameters['output_model_file_name']}}",
+              "--train-additional-args",
+              "--hp-config-suggestions-per-request",
+              "{{$.inputs.parameters['hp_config_suggestions_per_request']}}",
+              "--hp-config-max-trials",
+              "{{$.inputs.parameters['hp_config_max_trials']}}"
+            ],
+            "command": [
+              "python",
+              "/pipelines/component/src/train.py"
+            ],
+            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+          }
+        }
+      }
+    },
+    "pipelineInfo": {
+      "name": "training-pipeline-template"
+    },
+    "root": {
+      "dag": {
+        "outputs": {
+          "artifacts": {
+            "train-model-basic_metrics": {
+              "artifactSelectors": [
+                {
+                  "outputArtifactKey": "basic_metrics",
+                  "producerSubtask": "train-model"
+                }
+              ]
+            },
+            "train-model-classification_metrics": {
+              "artifactSelectors": [
+                {
+                  "outputArtifactKey": "classification_metrics",
+                  "producerSubtask": "train-model"
+                }
+              ]
+            }
+          }
+        },
+        "tasks": {
+          "check-model-metrics": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-check-model-metrics"
+            },
+            "dependentTasks": [
+              "train-model"
+            ],
+            "inputs": {
+              "artifacts": {
+                "basic_metrics": {
+                  "taskOutputArtifact": {
+                    "outputArtifactKey": "basic_metrics",
+                    "producerTask": "train-model"
+                  }
+                }
+              },
+              "parameters": {
+                "metrics_name": {
+                  "componentInputParameter": "metrics_name"
+                },
+                "metrics_threshold": {
+                  "componentInputParameter": "metrics_threshold"
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "check-model-metrics"
+            }
+          },
+          "data-preprocess": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-data-preprocess"
+            },
+            "inputs": {
+              "parameters": {
+                "data_region": {
+                  "componentInputParameter": "data_region"
+                },
+                "gcs_output_folder": {
+                  "componentInputParameter": "gcs_data_output_folder"
+                },
+                "gcs_output_format": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "CSV"
+                    }
+                  }
+                },
+                "project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "task_type": {
+                  "componentInputParameter": "task_type"
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "data-preprocess"
+            }
+          },
+          "train-model": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-train-model"
+            },
+            "dependentTasks": [
+              "data-preprocess"
+            ],
+            "inputs": {
+              "artifacts": {
+                "input_dataset": {
+                  "taskOutputArtifact": {
+                    "outputArtifactKey": "output_dataset",
+                    "producerTask": "data-preprocess"
+                  }
+                }
+              },
+              "parameters": {
+                "accelerator_count": {
+                  "componentInputParameter": "accelerator_count"
+                },
+                "accelerator_type": {
+                  "componentInputParameter": "accelerator_type"
+                },
+                "custom_job_service_account": {
+                  "componentInputParameter": "custom_job_service_account"
+                },
+                "data_pipeline_root": {
+                  "componentInputParameter": "data_pipeline_root"
+                },
+                "data_region": {
+                  "componentInputParameter": "data_region"
+                },
+                "hp_config_max_trials": {
+                  "componentInputParameter": "hp_config_max_trials"
+                },
+                "hp_config_suggestions_per_request": {
+                  "componentInputParameter": "hp_config_suggestions_per_request"
+                },
+                "hptune_region": {
+                  "componentInputParameter": "hptune_region"
+                },
+                "input_data_schema": {
+                  "componentInputParameter": "training_data_schema"
+                },
+                "machine_type": {
+                  "componentInputParameter": "machine_type"
+                },
+                "output_model_file_name": {
+                  "componentInputParameter": "output_model_file_name"
+                },
+                "project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "serving_container_image_uri": {
+                  "componentInputParameter": "serving_container_image_uri"
+                },
+                "training_container_image_uri": {
+                  "componentInputParameter": "training_container_image_uri"
+                },
+                "vpc_network": {
+                  "componentInputParameter": "vpc_network"
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "train-model"
+            }
+          }
+        }
+      },
+      "inputDefinitions": {
+        "parameters": {
+          "accelerator_count": {
+            "type": "INT"
+          },
+          "accelerator_type": {
+            "type": "STRING"
+          },
+          "custom_job_service_account": {
+            "type": "STRING"
+          },
+          "data_pipeline_root": {
+            "type": "STRING"
+          },
+          "data_region": {
+            "type": "STRING"
+          },
+          "enable_model_monitoring": {
+            "type": "STRING"
+          },
+          "endpoint_machine_type": {
+            "type": "STRING"
+          },
+          "endpoint_max_replica_count": {
+            "type": "INT"
+          },
+          "endpoint_min_replica_count": {
+            "type": "INT"
+          },
+          "endpoint_test_instances": {
+            "type": "STRING"
+          },
+          "gcs_data_output_folder": {
+            "type": "STRING"
+          },
+          "hp_config_max_trials": {
+            "type": "INT"
+          },
+          "hp_config_suggestions_per_request": {
+            "type": "INT"
+          },
+          "hptune_region": {
+            "type": "STRING"
+          },
+          "input_dataset_uri": {
+            "type": "STRING"
+          },
+          "machine_type": {
+            "type": "STRING"
+          },
+          "metrics_name": {
+            "type": "STRING"
+          },
+          "metrics_threshold": {
+            "type": "DOUBLE"
+          },
+          "output_model_file_name": {
+            "type": "STRING"
+          },
+          "project_id": {
+            "type": "STRING"
+          },
+          "serving_container_image_uri": {
+            "type": "STRING"
+          },
+          "task_type": {
+            "type": "STRING"
+          },
+          "training_container_image_uri": {
+            "type": "STRING"
+          },
+          "training_data_schema": {
+            "type": "STRING"
+          },
+          "vpc_network": {
+            "type": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "artifacts": {
+          "train-model-basic_metrics": {
+            "artifactType": {
+              "schemaTitle": "system.Metrics",
+              "schemaVersion": "0.0.1"
+            }
+          },
+          "train-model-classification_metrics": {
+            "artifactType": {
+              "schemaTitle": "system.ClassificationMetrics",
+              "schemaVersion": "0.0.1"
+            }
+          }
+        }
+      }
+    },
+    "schemaVersion": "2.0.0",
+    "sdkVersion": "kfp-1.8.11"
+  },
+  "runtimeConfig": {
+    "parameters": {
+      "accelerator_count": {
+        "intValue": "0"
+      },
+      "accelerator_type": {
+        "stringValue": "ACCELERATOR_TYPE_UNSPECIFIED"
+      },
+      "enable_model_monitoring": {
+        "stringValue": "False"
+      },
+      "machine_type": {
+        "stringValue": "n1-standard-8"
+      },
+      "output_model_file_name": {
+        "stringValue": "model.h5"
+      },
+      "task_type": {
+        "stringValue": "training"
+      },
+      "vpc_network": {
+        "stringValue": ""
+      }
+    }
+  }
+}
