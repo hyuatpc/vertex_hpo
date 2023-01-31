@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Model training program."""
+"""
+Model training program.
+"""
 
 from typing import Dict, Tuple, Optional, List, Iterable
 
@@ -36,15 +38,16 @@ from tensorflow.keras.layers import Dense, LSTM, Input, Embedding, BatchNormaliz
 from tensorflow.keras.models import Model
 import tensorflow.keras.backend as K
 from tensorflow.keras.backend import clear_session
+import hypertune
 
 import pickle
-from google.cloud import firestore
+
 # pylint: disable=logging-fstring-interpolation
 
 
 ################################################################################
 # Model serialization code
-################################################################################
+# ###############################################################################
 
 MODEL_FILENAME = 'model.h5'
 INSTANCE_SCHEMA_FILENAME = 'instance_schema.yaml'
@@ -61,54 +64,14 @@ def _save_training_tknz(tknz_name: str, model_store: str):
     file_path = os.path.join(model_store, tknz_name)
     tf.io.gfile.copy(tknz_name, file_path, overwrite=True)
 
-def _save_metrics(metrics: dict, output_path: str):
-    """Export the metrics of trained lgb model."""
-    with tf.io.gfile.GFile(output_path, 'w') as eval_file:
-        eval_file.write(json.dumps(metrics))
-
-
-def _save_analysis_schema(df: pd.DataFrame, model_store: str):
-    """Export instance schema for model monitoring service."""
-    file_path = os.path.join(model_store, INSTANCE_SCHEMA_FILENAME)
-    # create feature schema
-    properties = {}
-    types_info = df.dtypes
-
-    for i in range(len(types_info)):
-        if types_info.values[i] == object:
-            properties[types_info.index[i]] = {'type': 'string', 'nullable': True}
-        else:
-            properties[types_info.index[i]] = {'type': 'number', 'nullable': True}
-
-    spec = {
-        'type': 'object',
-        'properties': properties,
-        'required': 'reviewtext'
-    }
-
-    with tf.io.gfile.GFile(file_path, 'w') as file:
-        yaml.dump(spec, file)
-        
-
-def query_from_firestore(project_id, solution_name='hpo-pipeline-template'):
-    db = firestore.Client(project=project_id)
-
-    docs = db.collection('models').document(solution_name).collection("HPO").list_documents()
-    docs_latest = max([doc.id for doc in docs])
-
-    warehouses = [i.id for i in db.collection('models').document(solution_name).collection("HPO").document(docs_latest).collections()]
-
-    hpo_warehouses = {}
-    for warehouse in warehouses:
-        param = db.collection('models').document(solution_name).collection("HPO").document(docs_latest).collection(warehouse).document("params")
-        hpo_warehouses.update({warehouse: param.get().to_dict()})
-        
-    return hpo_warehouses
+def _save_hpo_metric(metric_path: str, model_store: str):
+    file_path = os.path.join(model_store, tknz_name)
+    tf.io.gfile.copy(metric_path, file_path, overwrite=True)
 
 
 ################################################################################
 # Data loading
-################################################################################
+# ###############################################################################
 
 def load_csv_dataset(data_uri_pattern: str
                      ) -> pd.DataFrame:
@@ -126,7 +89,7 @@ def load_csv_dataset(data_uri_pattern: str
 
 ################################################################################
 # Model training
-################################################################################
+# ###############################################################################
 
 
 def _evaluate_binary_classification(model: Model,
@@ -208,7 +171,7 @@ def tf_training(text_train_padded: np.ndarray,
 
     model.compile(loss='binary_crossentropy',
                   metrics=[balanced_acc, balanced_acc_diff],
-                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001))
+                  optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr))
 
     pos = y_train.value_counts().loc[1]
     neg = y_train.value_counts().loc[0]
@@ -228,36 +191,32 @@ def tf_training(text_train_padded: np.ndarray,
     )
 
     # train the model
-    model.fit(text_train_padded, y_train, epochs=3, batch_size=32,
+    history = model.fit(text_train_padded, y_train, epochs=10, batch_size=args.batch_size,
               validation_data=(text_val_padded, y_val),
               class_weight=class_weight,
               verbose=2, callbacks=[es])
 
-    return model
+    return model, history
 
 ################################################################################
 # Main Logic.
-################################################################################
+# ###############################################################################
 
 def train(args: argparse.Namespace):
   
     """The main training logic."""
 
-    if 'AIP_MODEL_DIR' not in os.environ:
-        raise KeyError(
-            'The `AIP_MODEL_DIR` environment variable has not been set. '
-            'See https://cloud.google.com/ai-platform-unified/docs/tutorials/'
-            'image-recognition-custom/training'
-        )
-    output_model_directory = os.environ['AIP_MODEL_DIR']
+    # if 'AIP_MODEL_DIR' not in os.environ:
+    #     raise KeyError(
+    #         'The `AIP_MODEL_DIR` environment variable has not been set. '
+    #         'See https://cloud.google.com/ai-platform-unified/docs/tutorials/'
+    #         'image-recognition-custom/training'
+    #     )
+    # output_model_directory = os.environ['AIP_MODEL_DIR']
 
-    logging.info(f'AIP_MODEL_DIR: {output_model_directory}')
+    #logging.info(f'AIP_MODEL_DIR: {output_model_directory}')
     logging.info(f'training_data_uri: {args.training_data_uri}')
-    logging.info(f'metrics_output_uri: {args.metrics_output_uri}')
-    
-    logging.info('Getting HPO params...')
-    hpo_warehouses = query_from_firestore(args.hp_config_gcp_project_id)
-    logging.info(f'HPO_params: {hpo_warehouses}')
+    #logging.info(f'metrics_output_uri: {args.metrics_output_uri}')
 
     # prepare the data
     df = load_csv_dataset(data_uri_pattern=args.training_data_uri)
@@ -274,10 +233,10 @@ def train(args: argparse.Namespace):
     tknz = Tokenizer()
     tknz.fit_on_texts(X_train)
     # Todo: this shall be an env var
-    tknz_name = 'tknz.pkl'
-    with open(tknz_name, 'wb') as f:
-        pickle.dump(tknz,f)
-    _save_training_tknz(tknz_name, output_model_directory)
+    # tknz_name = 'tknz.pkl'
+    # with open(tknz_name, 'wb') as f:
+    #     pickle.dump(tknz,f)
+    # _save_training_tknz(tknz_name, output_model_directory)
 
     logging.info('Padding words..')
     maxlen=100
@@ -286,23 +245,38 @@ def train(args: argparse.Namespace):
     text_test_padded = pad_sequences(tknz.texts_to_sequences(X_test), maxlen=maxlen)
 
     logging.info('Training model..')
-    model = tf_training(text_train_padded=text_train_padded,
+    model, history = tf_training(text_train_padded=text_train_padded,
                         text_val_padded=text_val_padded,
                         y_train=y_train,
                         y_val=y_val,
                         vocab_size=len(tknz.word_index)+1,
                         seq_len=maxlen,
                        args=args)
+    
+    # DEFINE METRIC
+    hp_metric = history.history['val_balanced_acc'][-1]
+
+    hpt = hypertune.HyperTune()
+    logging.info(f"metric_path: {os.path.dirname(hpt.metric_path)}")
+    
+    hpt.report_hyperparameter_tuning_metric(
+      hyperparameter_metric_tag='val_balanced_acc',
+      metric_value=hp_metric,
+      global_step=32
+    )
+    
+    metric_files = str(os.listdir(os.path.dirname(hpt.metric_path)))
+    logging.info(f"metric_files: {metric_files}")
 
     # save the generated model
-    logging.info('Saving training artifacts..')
-    _save_tf_model(model, output_model_directory)
-    _save_analysis_schema(X_train, output_model_directory)
+    # logging.info('Saving training artifacts..')
+    # _save_tf_model(model, output_model_directory)
+    # _save_analysis_schema(X_train, output_model_directory)
 
     # save eval metrics
-    metrics = _evaluate_binary_classification(model, text_test_padded, y_test)
-    if args.metrics_output_uri:
-        _save_metrics(metrics, args.metrics_output_uri)
+    # metrics = _evaluate_binary_classification(model, text_test_padded, y_test)
+    # if args.metrics_output_uri:
+    #     _save_metrics(metrics, args.metrics_output_uri)
         
     logging.info('Training is successful! Congratulations!')
 
@@ -313,55 +287,23 @@ if __name__ == '__main__':
     # For training data
     parser.add_argument('--training_data_uri', type=str,
                         help='The training dataset location in GCS.')
-    parser.add_argument('--training_data_schema', type=str, default='',
-                        help='The schema of the training dataset. The'
-                             'example schema: name:type;')
-    parser.add_argument('--features', type=str, default='',
-                        help='The column names of features to be used.')
-    parser.add_argument('--label', type=str, default='',
-                        help='The column name of label in the dataset.')
-
-    parser.add_argument('--metrics_output_uri', type=str,
-                        help='The GCS artifact URI to write model metrics.')
-    
-    # parser.add_argument('--val_balanced_acc', default=1.0, type=float,
-    #            help='hpo metric')
-    # For model hyperparameter
-    # parser.add_argument('--batch_size', default=128, type=float,
-    #                 help='Number of data samples contained in each batch.')
-    # parser.add_argument('--lr', default=0.01, type=float,
-    #             help='learning rate')
-    parser.add_argument('--min_data_in_leaf', default=5, type=float,
-                        help='Minimum number of observations that must '
-                             'fall into a tree node for it to be added.')
-    parser.add_argument('--num_boost_round', default=300, type=float,
-                        help='Number of boosting iterations.')
-    parser.add_argument('--max_depth_hp_param_min', default=-1, type=float,
-                        help='Max tree depth for base learners, <=0 means no '
-                             'limit. Min value for hyperparam param')
-    parser.add_argument('--max_depth_hp_param_max', default=4, type=float,
-                        help='Max tree depth for base learners, <=0 means no '
-                             'limit.  Max value for hyperparam param')
-    parser.add_argument('--num_leaves_hp_param_min', default=6, type=float,
-                        help='Maximum tree leaves for base learners. '
-                             'Min value for hyperparam param.')
-    parser.add_argument('--num_leaves_hp_param_max', default=10, type=float,
-                        help='Maximum tree leaves for base learners. '
-                             'Max value for hyperparam param.')
-    # For hyperparameter tuning with Vizer
-    parser.add_argument('--perform_hp', action='store_true', default=False,
-                        help='Specify whether to perform hyperparameter tuning.')
-    parser.add_argument('--hp_config_max_trials', default=20, type=float,
-                        help='Maximum number of hyperparam tuning trials.')
-    parser.add_argument('--hp_config_suggestions_per_request',
-                        default=5, type=float,
-                        help='Suggestions per vizier request')
-    parser.add_argument('--hp_config_gcp_region', default='asia-east1', type=str,
-                        help='Vizier GCP Region. Data or model no passed to '
-                             'vizier. Simply tuning config.')
-    parser.add_argument('--hp_config_gcp_project_id',
-                        default='woven-rush-197905', type=str,
-                        help='GCP project id.') 
+    # parser.add_argument('--training_data_schema', type=str, default='',
+    #                     help='The schema of the training dataset. The'
+    #                          'example schema: name:type;')
+    # parser.add_argument('--features', type=str, default='',
+    #                     help='The column names of features to be used.')
+    # parser.add_argument('--label', type=str, default='',
+    #                     help='The column name of label in the dataset.')
+    # parser.add_argument('--metrics_output_uri', type=str,
+    #                     help='The GCS artifact URI to write model metrics.')
+    parser.add_argument('--batch_size', default=32, type=int,
+                    help='batch size for base learners. '
+                         'batch size for hyperparam param.')
+    parser.add_argument('--lr', default=0.01, type=float,
+                help='lr for base learners. '
+                     'lr for hyperparam param.')
+    parser.add_argument('--warehouse', default='EC', type=str,
+            help='target wh')
 
     logging.info(parser.parse_args())
     known_args, _ = parser.parse_known_args()

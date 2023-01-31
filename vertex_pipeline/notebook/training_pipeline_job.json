@@ -1,30 +1,227 @@
 {
   "pipelineSpec": {
     "components": {
-      "comp-check-model-metrics": {
-        "executorLabel": "exec-check-model-metrics",
+      "comp-best-hpo-to-args": {
+        "executorLabel": "exec-best-hpo-to-args",
         "inputDefinitions": {
-          "artifacts": {
-            "basic_metrics": {
-              "artifactType": {
-                "schemaTitle": "system.Metrics",
-                "schemaVersion": "0.0.1"
-              }
-            }
-          },
           "parameters": {
-            "metrics_name": {
+            "as_at_date": {
               "type": "STRING"
             },
-            "metrics_threshold": {
-              "type": "DOUBLE"
+            "hpo_best": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "solution_name": {
+              "type": "STRING"
+            },
+            "warehouse": {
+              "type": "STRING"
             }
           }
         },
         "outputDefinitions": {
           "parameters": {
-            "is_better_metrics": {
+            "Output": {
               "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-best-hpo-to-args-2": {
+        "executorLabel": "exec-best-hpo-to-args-2",
+        "inputDefinitions": {
+          "parameters": {
+            "as_at_date": {
+              "type": "STRING"
+            },
+            "hpo_best": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "solution_name": {
+              "type": "STRING"
+            },
+            "warehouse": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-condition-train-model-1": {
+        "dag": {
+          "outputs": {
+            "artifacts": {
+              "train-model-basic_metrics": {
+                "artifactSelectors": [
+                  {
+                    "outputArtifactKey": "basic_metrics",
+                    "producerSubtask": "train-model"
+                  }
+                ]
+              },
+              "train-model-classification_metrics": {
+                "artifactSelectors": [
+                  {
+                    "outputArtifactKey": "classification_metrics",
+                    "producerSubtask": "train-model"
+                  }
+                ]
+              }
+            }
+          },
+          "tasks": {
+            "train-model": {
+              "cachingOptions": {
+                "enableCache": true
+              },
+              "componentRef": {
+                "name": "comp-train-model"
+              },
+              "inputs": {
+                "artifacts": {
+                  "input_dataset": {
+                    "componentInputArtifact": "pipelineparam--data-preprocess-output_dataset"
+                  }
+                },
+                "parameters": {
+                  "accelerator_count": {
+                    "componentInputParameter": "pipelineparam--accelerator_count"
+                  },
+                  "accelerator_type": {
+                    "componentInputParameter": "pipelineparam--accelerator_type"
+                  },
+                  "custom_job_service_account": {
+                    "componentInputParameter": "pipelineparam--custom_job_service_account"
+                  },
+                  "data_pipeline_root": {
+                    "componentInputParameter": "pipelineparam--data_pipeline_root"
+                  },
+                  "data_region": {
+                    "componentInputParameter": "pipelineparam--data_region"
+                  },
+                  "hp_config_max_trials": {
+                    "componentInputParameter": "pipelineparam--hp_config_max_trials"
+                  },
+                  "hp_config_suggestions_per_request": {
+                    "componentInputParameter": "pipelineparam--hp_config_suggestions_per_request"
+                  },
+                  "hptune_region": {
+                    "componentInputParameter": "pipelineparam--hptune_region"
+                  },
+                  "input_data_schema": {
+                    "componentInputParameter": "pipelineparam--training_data_schema"
+                  },
+                  "machine_type": {
+                    "componentInputParameter": "pipelineparam--machine_type"
+                  },
+                  "output_model_file_name": {
+                    "componentInputParameter": "pipelineparam--output_model_file_name"
+                  },
+                  "project_id": {
+                    "componentInputParameter": "pipelineparam--project_id"
+                  },
+                  "serving_container_image_uri": {
+                    "componentInputParameter": "pipelineparam--serving_container_image_uri"
+                  },
+                  "training_container_image_uri": {
+                    "componentInputParameter": "pipelineparam--training_container_image_uri"
+                  },
+                  "vpc_network": {
+                    "componentInputParameter": "pipelineparam--vpc_network"
+                  }
+                }
+              },
+              "taskInfo": {
+                "name": "train-model"
+              }
+            }
+          }
+        },
+        "inputDefinitions": {
+          "artifacts": {
+            "pipelineparam--data-preprocess-output_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          },
+          "parameters": {
+            "pipelineparam--accelerator_count": {
+              "type": "INT"
+            },
+            "pipelineparam--accelerator_type": {
+              "type": "STRING"
+            },
+            "pipelineparam--custom_job_service_account": {
+              "type": "STRING"
+            },
+            "pipelineparam--data_pipeline_root": {
+              "type": "STRING"
+            },
+            "pipelineparam--data_region": {
+              "type": "STRING"
+            },
+            "pipelineparam--hp_config_max_trials": {
+              "type": "INT"
+            },
+            "pipelineparam--hp_config_suggestions_per_request": {
+              "type": "INT"
+            },
+            "pipelineparam--hpo-completion-Output": {
+              "type": "STRING"
+            },
+            "pipelineparam--hptune_region": {
+              "type": "STRING"
+            },
+            "pipelineparam--machine_type": {
+              "type": "STRING"
+            },
+            "pipelineparam--output_model_file_name": {
+              "type": "STRING"
+            },
+            "pipelineparam--project_id": {
+              "type": "STRING"
+            },
+            "pipelineparam--serving_container_image_uri": {
+              "type": "STRING"
+            },
+            "pipelineparam--training_container_image_uri": {
+              "type": "STRING"
+            },
+            "pipelineparam--training_data_schema": {
+              "type": "STRING"
+            },
+            "pipelineparam--vpc_network": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "artifacts": {
+            "train-model-basic_metrics": {
+              "artifactType": {
+                "schemaTitle": "system.Metrics",
+                "schemaVersion": "0.0.1"
+              }
+            },
+            "train-model-classification_metrics": {
+              "artifactType": {
+                "schemaTitle": "system.ClassificationMetrics",
+                "schemaVersion": "0.0.1"
+              }
             }
           }
         }
@@ -57,6 +254,215 @@
                 "schemaTitle": "system.Dataset",
                 "schemaVersion": "0.0.1"
               }
+            }
+          }
+        }
+      },
+      "comp-getbesttrialop": {
+        "executorLabel": "exec-getbesttrialop",
+        "inputDefinitions": {
+          "parameters": {
+            "study_spec_metrics": {
+              "type": "STRING"
+            },
+            "trials": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-getbesttrialop-2": {
+        "executorLabel": "exec-getbesttrialop-2",
+        "inputDefinitions": {
+          "parameters": {
+            "study_spec_metrics": {
+              "type": "STRING"
+            },
+            "trials": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-gettrialsop": {
+        "executorLabel": "exec-gettrialsop",
+        "inputDefinitions": {
+          "parameters": {
+            "gcp_resources": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-gettrialsop-2": {
+        "executorLabel": "exec-gettrialsop-2",
+        "inputDefinitions": {
+          "parameters": {
+            "gcp_resources": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-hpo-completion": {
+        "executorLabel": "exec-hpo-completion",
+        "inputDefinitions": {
+          "parameters": {
+            "hpo_flags": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-hyperparameter-tuning-job": {
+        "executorLabel": "exec-hyperparameter-tuning-job",
+        "inputDefinitions": {
+          "parameters": {
+            "base_output_directory": {
+              "type": "STRING"
+            },
+            "display_name": {
+              "type": "STRING"
+            },
+            "encryption_spec_key_name": {
+              "type": "STRING"
+            },
+            "location": {
+              "type": "STRING"
+            },
+            "max_failed_trial_count": {
+              "type": "INT"
+            },
+            "max_trial_count": {
+              "type": "INT"
+            },
+            "network": {
+              "type": "STRING"
+            },
+            "parallel_trial_count": {
+              "type": "INT"
+            },
+            "project": {
+              "type": "STRING"
+            },
+            "service_account": {
+              "type": "STRING"
+            },
+            "study_spec_algorithm": {
+              "type": "STRING"
+            },
+            "study_spec_measurement_selection_type": {
+              "type": "STRING"
+            },
+            "study_spec_metrics": {
+              "type": "STRING"
+            },
+            "study_spec_parameters": {
+              "type": "STRING"
+            },
+            "worker_pool_specs": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "gcp_resources": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-hyperparameter-tuning-job-2": {
+        "executorLabel": "exec-hyperparameter-tuning-job-2",
+        "inputDefinitions": {
+          "parameters": {
+            "base_output_directory": {
+              "type": "STRING"
+            },
+            "display_name": {
+              "type": "STRING"
+            },
+            "encryption_spec_key_name": {
+              "type": "STRING"
+            },
+            "location": {
+              "type": "STRING"
+            },
+            "max_failed_trial_count": {
+              "type": "INT"
+            },
+            "max_trial_count": {
+              "type": "INT"
+            },
+            "network": {
+              "type": "STRING"
+            },
+            "parallel_trial_count": {
+              "type": "INT"
+            },
+            "project": {
+              "type": "STRING"
+            },
+            "service_account": {
+              "type": "STRING"
+            },
+            "study_spec_algorithm": {
+              "type": "STRING"
+            },
+            "study_spec_measurement_selection_type": {
+              "type": "STRING"
+            },
+            "study_spec_metrics": {
+              "type": "STRING"
+            },
+            "study_spec_parameters": {
+              "type": "STRING"
+            },
+            "worker_pool_specs": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "gcp_resources": {
+              "type": "STRING"
             }
           }
         }
@@ -154,31 +560,128 @@
             }
           }
         }
+      },
+      "comp-worker-pool-specs": {
+        "executorLabel": "exec-worker-pool-specs",
+        "inputDefinitions": {
+          "artifacts": {
+            "input_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          },
+          "parameters": {
+            "custom_job_service_account": {
+              "type": "STRING"
+            },
+            "data_pipeline_root": {
+              "type": "STRING"
+            },
+            "data_region": {
+              "type": "STRING"
+            },
+            "hpo_container_image_uri": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "warehouse": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
+      },
+      "comp-worker-pool-specs-2": {
+        "executorLabel": "exec-worker-pool-specs-2",
+        "inputDefinitions": {
+          "artifacts": {
+            "input_dataset": {
+              "artifactType": {
+                "schemaTitle": "system.Dataset",
+                "schemaVersion": "0.0.1"
+              }
+            }
+          },
+          "parameters": {
+            "custom_job_service_account": {
+              "type": "STRING"
+            },
+            "data_pipeline_root": {
+              "type": "STRING"
+            },
+            "data_region": {
+              "type": "STRING"
+            },
+            "hpo_container_image_uri": {
+              "type": "STRING"
+            },
+            "project_id": {
+              "type": "STRING"
+            },
+            "warehouse": {
+              "type": "STRING"
+            }
+          }
+        },
+        "outputDefinitions": {
+          "parameters": {
+            "Output": {
+              "type": "STRING"
+            }
+          }
+        }
       }
     },
     "deploymentSpec": {
       "executors": {
-        "exec-check-model-metrics": {
+        "exec-best-hpo-to-args": {
           "container": {
             "args": [
               "--executor_input",
               "{{$}}",
               "--function_to_execute",
-              "check_metrics",
-              "--metrics-name-path",
-              "{{$.inputs.parameters['metrics_name']}}",
-              "--metrics-threshold-path",
-              "{{$.inputs.parameters['metrics_threshold']}}",
-              "--basic-metrics",
-              "{{$.inputs.artifacts['basic_metrics'].path}}",
-              "--is-better-metrics",
-              "{{$.outputs.parameters['is_better_metrics'].output_file}}"
+              "best_hpo_to_args"
             ],
             "command": [
-              "python",
-              "/pipelines/component/src/metrics.py"
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-firestore==2.3' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef best_hpo_to_args(hpo_best: str,\n                    project_id: str,\n                    solution_name: str,\n                    as_at_date: str,\n                    warehouse: str) -> str:\n    import json\n    from google.cloud import firestore\n    hpo_best = json.loads(hpo_best.replace(\"'\", '\"'))\n\n    hpo_best_dict = {}\n\n    for i in hpo_best['parameters']:\n        hpo_best_dict.update({i['parameterId']: i['value']})\n\n    for i in hpo_best['finalMeasurement']['metrics']:\n        hpo_best_dict.update({i['metricId']: i['value']})\n\n    db = firestore.Client(project=project_id)\n    db.collection(\"models\").document(solution_name).collection(\"HPO\").document(\n        as_at_date).collection(warehouse).document(\"params\").set(hpo_best_dict,merge=True)\n\n    hpo_best_dict.update({'warehouse': warehouse})\n    hpo_best_dict=str(hpo_best_dict).replace(\"'\", '\"')\n\n    return hpo_best_dict\n\n"
             ],
-            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+            "image": "python:3.7"
+          }
+        },
+        "exec-best-hpo-to-args-2": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "best_hpo_to_args"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-firestore==2.3' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef best_hpo_to_args(hpo_best: str,\n                    project_id: str,\n                    solution_name: str,\n                    as_at_date: str,\n                    warehouse: str) -> str:\n    import json\n    from google.cloud import firestore\n    hpo_best = json.loads(hpo_best.replace(\"'\", '\"'))\n\n    hpo_best_dict = {}\n\n    for i in hpo_best['parameters']:\n        hpo_best_dict.update({i['parameterId']: i['value']})\n\n    for i in hpo_best['finalMeasurement']['metrics']:\n        hpo_best_dict.update({i['metricId']: i['value']})\n\n    db = firestore.Client(project=project_id)\n    db.collection(\"models\").document(solution_name).collection(\"HPO\").document(\n        as_at_date).collection(warehouse).document(\"params\").set(hpo_best_dict,merge=True)\n\n    hpo_best_dict.update({'warehouse': warehouse})\n    hpo_best_dict=str(hpo_best_dict).replace(\"'\", '\"')\n\n    return hpo_best_dict\n\n"
+            ],
+            "image": "python:3.7"
           }
         },
         "exec-data-preprocess": {
@@ -206,7 +709,153 @@
               "python",
               "/pipelines/component/src/preprocess.py"
             ],
-            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+            "image": "australia-southeast1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+          }
+        },
+        "exec-getbesttrialop": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "GetBestTrialOp"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef GetBestTrialOp(trials: list, study_spec_metrics: list) -> str:\n  \"\"\"Retrieves the best trial from the trials.\n\n  Args:\n      trials (list): Required. List representing the intermediate\n        JSON representation of the trials from the hyperparameter tuning job.\n      study_spec_metrics (list): Required. List serialized from dictionary\n        representing the metrics to optimize.\n        The dictionary key is the metric_id, which is reported by your training\n        job, and the dictionary value is the optimization goal of the metric\n        ('minimize' or 'maximize'). example:\n        metrics = hyperparameter_tuning_job.serialize_metrics(\n            {'loss': 'minimize', 'accuracy': 'maximize'})\n\n  Returns:\n      String representing the intermediate JSON representation of the best\n      trial from the list of trials.\n\n  Raises:\n      RuntimeError: If there are multiple metrics.\n  \"\"\"\n  from google.cloud.aiplatform_v1.types import study\n\n  if len(study_spec_metrics) > 1:\n    raise RuntimeError('Unable to determine best parameters for multi-objective'\n                       ' hyperparameter tuning.')\n  trials_list = [study.Trial.from_json(trial) for trial in trials]\n  best_trial = None\n  goal = study_spec_metrics[0]['goal']\n  best_fn = None\n  if goal == study.StudySpec.MetricSpec.GoalType.MAXIMIZE:\n    best_fn = max\n  elif goal == study.StudySpec.MetricSpec.GoalType.MINIMIZE:\n    best_fn = min\n  best_trial = best_fn(\n      trials_list, key=lambda trial: trial.final_measurement.metrics[0].value)\n\n  return study.Trial.to_json(best_trial)\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-getbesttrialop-2": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "GetBestTrialOp"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef GetBestTrialOp(trials: list, study_spec_metrics: list) -> str:\n  \"\"\"Retrieves the best trial from the trials.\n\n  Args:\n      trials (list): Required. List representing the intermediate\n        JSON representation of the trials from the hyperparameter tuning job.\n      study_spec_metrics (list): Required. List serialized from dictionary\n        representing the metrics to optimize.\n        The dictionary key is the metric_id, which is reported by your training\n        job, and the dictionary value is the optimization goal of the metric\n        ('minimize' or 'maximize'). example:\n        metrics = hyperparameter_tuning_job.serialize_metrics(\n            {'loss': 'minimize', 'accuracy': 'maximize'})\n\n  Returns:\n      String representing the intermediate JSON representation of the best\n      trial from the list of trials.\n\n  Raises:\n      RuntimeError: If there are multiple metrics.\n  \"\"\"\n  from google.cloud.aiplatform_v1.types import study\n\n  if len(study_spec_metrics) > 1:\n    raise RuntimeError('Unable to determine best parameters for multi-objective'\n                       ' hyperparameter tuning.')\n  trials_list = [study.Trial.from_json(trial) for trial in trials]\n  best_trial = None\n  goal = study_spec_metrics[0]['goal']\n  best_fn = None\n  if goal == study.StudySpec.MetricSpec.GoalType.MAXIMIZE:\n    best_fn = max\n  elif goal == study.StudySpec.MetricSpec.GoalType.MINIMIZE:\n    best_fn = min\n  best_trial = best_fn(\n      trials_list, key=lambda trial: trial.final_measurement.metrics[0].value)\n\n  return study.Trial.to_json(best_trial)\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-gettrialsop": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "GetTrialsOp"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'google-cloud-pipeline-components' 'protobuf' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef GetTrialsOp(gcp_resources: str) -> list:\n  \"\"\"Retrieves the best trial from the trials.\n\n  Args:\n      gcp_resources (str): Proto tracking the hyperparameter tuning job.\n\n  Returns:\n      List of strings representing the intermediate JSON representation of the\n      trials from the hyperparameter tuning job.\n  \"\"\"\n  from google.cloud import aiplatform\n  from google_cloud_pipeline_components.proto.gcp_resources_pb2 import GcpResources\n  from google.protobuf.json_format import Parse\n  from google.cloud.aiplatform_v1.types import study\n\n  api_endpoint_suffix = '-aiplatform.googleapis.com'\n  gcp_resources_proto = Parse(gcp_resources, GcpResources())\n  gcp_resources_split = gcp_resources_proto.resources[0].resource_uri.partition(\n      'projects')\n  resource_name = gcp_resources_split[1] + gcp_resources_split[2]\n  prefix_str = gcp_resources_split[0]\n  prefix_str = prefix_str[:prefix_str.find(api_endpoint_suffix)]\n  api_endpoint = prefix_str[(prefix_str.rfind('//') + 2):] + api_endpoint_suffix\n\n  client_options = {'api_endpoint': api_endpoint}\n  job_client = aiplatform.gapic.JobServiceClient(client_options=client_options)\n  response = job_client.get_hyperparameter_tuning_job(name=resource_name)\n\n  return [study.Trial.to_json(trial) for trial in response.trials]\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-gettrialsop-2": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "GetTrialsOp"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'google-cloud-aiplatform' 'google-cloud-pipeline-components' 'protobuf' 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef GetTrialsOp(gcp_resources: str) -> list:\n  \"\"\"Retrieves the best trial from the trials.\n\n  Args:\n      gcp_resources (str): Proto tracking the hyperparameter tuning job.\n\n  Returns:\n      List of strings representing the intermediate JSON representation of the\n      trials from the hyperparameter tuning job.\n  \"\"\"\n  from google.cloud import aiplatform\n  from google_cloud_pipeline_components.proto.gcp_resources_pb2 import GcpResources\n  from google.protobuf.json_format import Parse\n  from google.cloud.aiplatform_v1.types import study\n\n  api_endpoint_suffix = '-aiplatform.googleapis.com'\n  gcp_resources_proto = Parse(gcp_resources, GcpResources())\n  gcp_resources_split = gcp_resources_proto.resources[0].resource_uri.partition(\n      'projects')\n  resource_name = gcp_resources_split[1] + gcp_resources_split[2]\n  prefix_str = gcp_resources_split[0]\n  prefix_str = prefix_str[:prefix_str.find(api_endpoint_suffix)]\n  api_endpoint = prefix_str[(prefix_str.rfind('//') + 2):] + api_endpoint_suffix\n\n  client_options = {'api_endpoint': api_endpoint}\n  job_client = aiplatform.gapic.JobServiceClient(client_options=client_options)\n  response = job_client.get_hyperparameter_tuning_job(name=resource_name)\n\n  return [study.Trial.to_json(trial) for trial in response.trials]\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-hpo-completion": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "hpo_completion"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef hpo_completion(hpo_flags: list) -> str:\n    return \"true\"\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-hyperparameter-tuning-job": {
+          "container": {
+            "args": [
+              "--type",
+              "HyperparameterTuningJob",
+              "--payload",
+              "{\"display_name\": \"{{$.inputs.parameters['display_name']}}\", \"study_spec\": {\"metrics\": {{$.inputs.parameters['study_spec_metrics']}}, \"parameters\": {{$.inputs.parameters['study_spec_parameters']}}, \"algorithm\": \"{{$.inputs.parameters['study_spec_algorithm']}}\", \"measurement_selection_type\": \"{{$.inputs.parameters['study_spec_measurement_selection_type']}}\"}, \"max_trial_count\": {{$.inputs.parameters['max_trial_count']}}, \"parallel_trial_count\": {{$.inputs.parameters['parallel_trial_count']}}, \"max_failed_trial_count\": {{$.inputs.parameters['max_failed_trial_count']}}, \"trial_job_spec\": {\"worker_pool_specs\": {{$.inputs.parameters['worker_pool_specs']}}, \"service_account\": \"{{$.inputs.parameters['service_account']}}\", \"network\": \"{{$.inputs.parameters['network']}}\", \"base_output_directory\": {\"output_uri_prefix\": \"{{$.inputs.parameters['base_output_directory']}}\"}}, \"encryption_spec\": {\"kms_key_name\":\"{{$.inputs.parameters['encryption_spec_key_name']}}\"}}",
+              "--project",
+              "{{$.inputs.parameters['project']}}",
+              "--location",
+              "{{$.inputs.parameters['location']}}",
+              "--gcp_resources",
+              "{{$.outputs.parameters['gcp_resources'].output_file}}"
+            ],
+            "command": [
+              "python3",
+              "-u",
+              "-m",
+              "google_cloud_pipeline_components.container.v1.hyperparameter_tuning_job.launcher"
+            ],
+            "image": "gcr.io/ml-pipeline/google-cloud-pipeline-components:1.0.32"
+          }
+        },
+        "exec-hyperparameter-tuning-job-2": {
+          "container": {
+            "args": [
+              "--type",
+              "HyperparameterTuningJob",
+              "--payload",
+              "{\"display_name\": \"{{$.inputs.parameters['display_name']}}\", \"study_spec\": {\"metrics\": {{$.inputs.parameters['study_spec_metrics']}}, \"parameters\": {{$.inputs.parameters['study_spec_parameters']}}, \"algorithm\": \"{{$.inputs.parameters['study_spec_algorithm']}}\", \"measurement_selection_type\": \"{{$.inputs.parameters['study_spec_measurement_selection_type']}}\"}, \"max_trial_count\": {{$.inputs.parameters['max_trial_count']}}, \"parallel_trial_count\": {{$.inputs.parameters['parallel_trial_count']}}, \"max_failed_trial_count\": {{$.inputs.parameters['max_failed_trial_count']}}, \"trial_job_spec\": {\"worker_pool_specs\": {{$.inputs.parameters['worker_pool_specs']}}, \"service_account\": \"{{$.inputs.parameters['service_account']}}\", \"network\": \"{{$.inputs.parameters['network']}}\", \"base_output_directory\": {\"output_uri_prefix\": \"{{$.inputs.parameters['base_output_directory']}}\"}}, \"encryption_spec\": {\"kms_key_name\":\"{{$.inputs.parameters['encryption_spec_key_name']}}\"}}",
+              "--project",
+              "{{$.inputs.parameters['project']}}",
+              "--location",
+              "{{$.inputs.parameters['location']}}",
+              "--gcp_resources",
+              "{{$.outputs.parameters['gcp_resources'].output_file}}"
+            ],
+            "command": [
+              "python3",
+              "-u",
+              "-m",
+              "google_cloud_pipeline_components.container.v1.hyperparameter_tuning_job.launcher"
+            ],
+            "image": "gcr.io/ml-pipeline/google-cloud-pipeline-components:1.0.32"
           }
         },
         "exec-train-model": {
@@ -264,13 +913,53 @@
               "python",
               "/pipelines/component/src/train.py"
             ],
-            "image": "us-central1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+            "image": "australia-southeast1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/component-base:latest"
+          }
+        },
+        "exec-worker-pool-specs": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "worker_pool_specs"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef worker_pool_specs(project_id: str,\n    data_region: str,\n    data_pipeline_root: str,\n    hpo_container_image_uri: str,\n    custom_job_service_account: str,\n    warehouse: str,\n    input_dataset: Input[Dataset]\n                     ) -> list:\n\n    task_type = 'training'\n    display_name = 'hpo-pipeline-template'\n    CMDARGS = [\n    \"--training_data_uri=\"+str(input_dataset.uri),\n    \"--warehouse=\"+warehouse,\n    #\"--training_data_uri=gs://vertex_pipeline_demo_root_hy_syd/datasets/training/processed_data-20230118012508.csv\"\n    ]\n\n    # The spec of the worker pools including machine type and Docker image\n    worker_pool_specs = [\n    {\n        \"machine_spec\": {\n            \"machine_type\": \"n1-standard-4\",\n        },\n        \"replica_count\": 1,\n        \"container_spec\": {\"image_uri\": hpo_container_image_uri, \"args\": CMDARGS},\n    }\n    ]\n\n    return worker_pool_specs\n\n"
+            ],
+            "image": "python:3.7"
+          }
+        },
+        "exec-worker-pool-specs-2": {
+          "container": {
+            "args": [
+              "--executor_input",
+              "{{$}}",
+              "--function_to_execute",
+              "worker_pool_specs"
+            ],
+            "command": [
+              "sh",
+              "-c",
+              "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet     --no-warn-script-location 'kfp==1.8.11' && \"$0\" \"$@\"\n",
+              "sh",
+              "-ec",
+              "program_path=$(mktemp -d)\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\npython3 -m kfp.v2.components.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+              "\nimport kfp\nfrom kfp.v2 import dsl\nfrom kfp.v2.dsl import *\nfrom typing import *\n\ndef worker_pool_specs(project_id: str,\n    data_region: str,\n    data_pipeline_root: str,\n    hpo_container_image_uri: str,\n    custom_job_service_account: str,\n    warehouse: str,\n    input_dataset: Input[Dataset]\n                     ) -> list:\n\n    task_type = 'training'\n    display_name = 'hpo-pipeline-template'\n    CMDARGS = [\n    \"--training_data_uri=\"+str(input_dataset.uri),\n    \"--warehouse=\"+warehouse,\n    #\"--training_data_uri=gs://vertex_pipeline_demo_root_hy_syd/datasets/training/processed_data-20230118012508.csv\"\n    ]\n\n    # The spec of the worker pools including machine type and Docker image\n    worker_pool_specs = [\n    {\n        \"machine_spec\": {\n            \"machine_type\": \"n1-standard-4\",\n        },\n        \"replica_count\": 1,\n        \"container_spec\": {\"image_uri\": hpo_container_image_uri, \"args\": CMDARGS},\n    }\n    ]\n\n    return worker_pool_specs\n\n"
+            ],
+            "image": "python:3.7"
           }
         }
       }
     },
     "pipelineInfo": {
-      "name": "training-pipeline-template"
+      "name": "hpo-pipeline-template"
     },
     "root": {
       "dag": {
@@ -279,52 +968,194 @@
             "train-model-basic_metrics": {
               "artifactSelectors": [
                 {
-                  "outputArtifactKey": "basic_metrics",
-                  "producerSubtask": "train-model"
+                  "outputArtifactKey": "train-model-basic_metrics",
+                  "producerSubtask": "condition-train-model-1"
                 }
               ]
             },
             "train-model-classification_metrics": {
               "artifactSelectors": [
                 {
-                  "outputArtifactKey": "classification_metrics",
-                  "producerSubtask": "train-model"
+                  "outputArtifactKey": "train-model-classification_metrics",
+                  "producerSubtask": "condition-train-model-1"
                 }
               ]
             }
           }
         },
         "tasks": {
-          "check-model-metrics": {
+          "best-hpo-to-args": {
             "cachingOptions": {
               "enableCache": true
             },
             "componentRef": {
-              "name": "comp-check-model-metrics"
+              "name": "comp-best-hpo-to-args"
             },
             "dependentTasks": [
-              "train-model"
+              "getbesttrialop"
             ],
             "inputs": {
-              "artifacts": {
-                "basic_metrics": {
-                  "taskOutputArtifact": {
-                    "outputArtifactKey": "basic_metrics",
-                    "producerTask": "train-model"
-                  }
-                }
-              },
               "parameters": {
-                "metrics_name": {
-                  "componentInputParameter": "metrics_name"
+                "as_at_date": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "2023-01-18"
+                    }
+                  }
                 },
-                "metrics_threshold": {
-                  "componentInputParameter": "metrics_threshold"
+                "hpo_best": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "getbesttrialop"
+                  }
+                },
+                "project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "solution_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "hpo-pipeline-template"
+                    }
+                  }
+                },
+                "warehouse": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "EC"
+                    }
+                  }
                 }
               }
             },
             "taskInfo": {
-              "name": "check-model-metrics"
+              "name": "best-hpo-to-args"
+            }
+          },
+          "best-hpo-to-args-2": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-best-hpo-to-args-2"
+            },
+            "dependentTasks": [
+              "getbesttrialop-2"
+            ],
+            "inputs": {
+              "parameters": {
+                "as_at_date": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "2023-01-18"
+                    }
+                  }
+                },
+                "hpo_best": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "getbesttrialop-2"
+                  }
+                },
+                "project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "solution_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "hpo-pipeline-template"
+                    }
+                  }
+                },
+                "warehouse": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "MEL"
+                    }
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "best-hpo-to-args-2"
+            }
+          },
+          "condition-train-model-1": {
+            "componentRef": {
+              "name": "comp-condition-train-model-1"
+            },
+            "dependentTasks": [
+              "data-preprocess",
+              "hpo-completion"
+            ],
+            "inputs": {
+              "artifacts": {
+                "pipelineparam--data-preprocess-output_dataset": {
+                  "taskOutputArtifact": {
+                    "outputArtifactKey": "output_dataset",
+                    "producerTask": "data-preprocess"
+                  }
+                }
+              },
+              "parameters": {
+                "pipelineparam--accelerator_count": {
+                  "componentInputParameter": "accelerator_count"
+                },
+                "pipelineparam--accelerator_type": {
+                  "componentInputParameter": "accelerator_type"
+                },
+                "pipelineparam--custom_job_service_account": {
+                  "componentInputParameter": "custom_job_service_account"
+                },
+                "pipelineparam--data_pipeline_root": {
+                  "componentInputParameter": "data_pipeline_root"
+                },
+                "pipelineparam--data_region": {
+                  "componentInputParameter": "data_region"
+                },
+                "pipelineparam--hp_config_max_trials": {
+                  "componentInputParameter": "hp_config_max_trials"
+                },
+                "pipelineparam--hp_config_suggestions_per_request": {
+                  "componentInputParameter": "hp_config_suggestions_per_request"
+                },
+                "pipelineparam--hpo-completion-Output": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "hpo-completion"
+                  }
+                },
+                "pipelineparam--hptune_region": {
+                  "componentInputParameter": "hptune_region"
+                },
+                "pipelineparam--machine_type": {
+                  "componentInputParameter": "machine_type"
+                },
+                "pipelineparam--output_model_file_name": {
+                  "componentInputParameter": "output_model_file_name"
+                },
+                "pipelineparam--project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "pipelineparam--serving_container_image_uri": {
+                  "componentInputParameter": "serving_container_image_uri"
+                },
+                "pipelineparam--training_container_image_uri": {
+                  "componentInputParameter": "training_container_image_uri"
+                },
+                "pipelineparam--training_data_schema": {
+                  "componentInputParameter": "training_data_schema"
+                },
+                "pipelineparam--vpc_network": {
+                  "componentInputParameter": "vpc_network"
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "condition-train-model-1"
+            },
+            "triggerPolicy": {
+              "condition": "inputs.parameters['pipelineparam--hpo-completion-Output'].string_value == 'true'"
             }
           },
           "data-preprocess": {
@@ -353,7 +1184,11 @@
                   "componentInputParameter": "project_id"
                 },
                 "task_type": {
-                  "componentInputParameter": "task_type"
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "training"
+                    }
+                  }
                 }
               }
             },
@@ -361,12 +1196,368 @@
               "name": "data-preprocess"
             }
           },
-          "train-model": {
+          "getbesttrialop": {
             "cachingOptions": {
               "enableCache": true
             },
             "componentRef": {
-              "name": "comp-train-model"
+              "name": "comp-getbesttrialop"
+            },
+            "dependentTasks": [
+              "gettrialsop"
+            ],
+            "inputs": {
+              "parameters": {
+                "study_spec_metrics": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"metric_id\": \"val_balanced_acc\", \"goal\": 1}]"
+                    }
+                  }
+                },
+                "trials": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "gettrialsop"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "getbesttrialop"
+            }
+          },
+          "getbesttrialop-2": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-getbesttrialop-2"
+            },
+            "dependentTasks": [
+              "gettrialsop-2"
+            ],
+            "inputs": {
+              "parameters": {
+                "study_spec_metrics": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"metric_id\": \"val_balanced_acc\", \"goal\": 1}]"
+                    }
+                  }
+                },
+                "trials": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "gettrialsop-2"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "getbesttrialop-2"
+            }
+          },
+          "gettrialsop": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-gettrialsop"
+            },
+            "dependentTasks": [
+              "hyperparameter-tuning-job"
+            ],
+            "inputs": {
+              "parameters": {
+                "gcp_resources": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "gcp_resources",
+                    "producerTask": "hyperparameter-tuning-job"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "gettrialsop"
+            }
+          },
+          "gettrialsop-2": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-gettrialsop-2"
+            },
+            "dependentTasks": [
+              "hyperparameter-tuning-job-2"
+            ],
+            "inputs": {
+              "parameters": {
+                "gcp_resources": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "gcp_resources",
+                    "producerTask": "hyperparameter-tuning-job-2"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "gettrialsop-2"
+            }
+          },
+          "hpo-completion": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-hpo-completion"
+            },
+            "dependentTasks": [
+              "best-hpo-to-args",
+              "best-hpo-to-args-2"
+            ],
+            "inputs": {
+              "parameters": {
+                "hpo_flags": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[\"{{pipelineparam:op=best-hpo-to-args;name=Output}}\", \"{{pipelineparam:op=best-hpo-to-args-2;name=Output}}\"]"
+                    }
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "hpo-completion"
+            }
+          },
+          "hyperparameter-tuning-job": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-hyperparameter-tuning-job"
+            },
+            "dependentTasks": [
+              "worker-pool-specs"
+            ],
+            "inputs": {
+              "parameters": {
+                "base_output_directory": {
+                  "componentInputParameter": "data_pipeline_root"
+                },
+                "display_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "hpo-pipeline-template-EC"
+                    }
+                  }
+                },
+                "encryption_spec_key_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "location": {
+                  "componentInputParameter": "data_region"
+                },
+                "max_failed_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "0"
+                    }
+                  }
+                },
+                "max_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "4"
+                    }
+                  }
+                },
+                "network": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "parallel_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "2"
+                    }
+                  }
+                },
+                "project": {
+                  "componentInputParameter": "project_id"
+                },
+                "service_account": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "study_spec_algorithm": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "GRID_SEARCH"
+                    }
+                  }
+                },
+                "study_spec_measurement_selection_type": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "BEST_MEASUREMENT"
+                    }
+                  }
+                },
+                "study_spec_metrics": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"metric_id\": \"val_balanced_acc\", \"goal\": 1}]"
+                    }
+                  }
+                },
+                "study_spec_parameters": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"parameter_id\": \"batch_size\", \"discrete_value_spec\": {\"values\": [32.0, 64.0]}, \"scale_type\": 0, \"conditional_parameter_specs\": []}, {\"parameter_id\": \"lr\", \"discrete_value_spec\": {\"values\": [0.0001, 0.0002]}, \"scale_type\": 0, \"conditional_parameter_specs\": []}]"
+                    }
+                  }
+                },
+                "worker_pool_specs": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "worker-pool-specs"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "hyperparameter-tuning-job"
+            }
+          },
+          "hyperparameter-tuning-job-2": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-hyperparameter-tuning-job-2"
+            },
+            "dependentTasks": [
+              "worker-pool-specs-2"
+            ],
+            "inputs": {
+              "parameters": {
+                "base_output_directory": {
+                  "componentInputParameter": "data_pipeline_root"
+                },
+                "display_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "hpo-pipeline-template-MEL"
+                    }
+                  }
+                },
+                "encryption_spec_key_name": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "location": {
+                  "componentInputParameter": "data_region"
+                },
+                "max_failed_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "0"
+                    }
+                  }
+                },
+                "max_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "4"
+                    }
+                  }
+                },
+                "network": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "parallel_trial_count": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "intValue": "2"
+                    }
+                  }
+                },
+                "project": {
+                  "componentInputParameter": "project_id"
+                },
+                "service_account": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": ""
+                    }
+                  }
+                },
+                "study_spec_algorithm": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "GRID_SEARCH"
+                    }
+                  }
+                },
+                "study_spec_measurement_selection_type": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "BEST_MEASUREMENT"
+                    }
+                  }
+                },
+                "study_spec_metrics": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"metric_id\": \"val_balanced_acc\", \"goal\": 1}]"
+                    }
+                  }
+                },
+                "study_spec_parameters": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "[{\"parameter_id\": \"batch_size\", \"discrete_value_spec\": {\"values\": [32.0, 64.0]}, \"scale_type\": 0, \"conditional_parameter_specs\": []}, {\"parameter_id\": \"lr\", \"discrete_value_spec\": {\"values\": [0.0001, 0.0002]}, \"scale_type\": 0, \"conditional_parameter_specs\": []}]"
+                    }
+                  }
+                },
+                "worker_pool_specs": {
+                  "taskOutputParameter": {
+                    "outputParameterKey": "Output",
+                    "producerTask": "worker-pool-specs-2"
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "hyperparameter-tuning-job-2"
+            }
+          },
+          "worker-pool-specs": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-worker-pool-specs"
             },
             "dependentTasks": [
               "data-preprocess"
@@ -381,14 +1572,12 @@
                 }
               },
               "parameters": {
-                "accelerator_count": {
-                  "componentInputParameter": "accelerator_count"
-                },
-                "accelerator_type": {
-                  "componentInputParameter": "accelerator_type"
-                },
                 "custom_job_service_account": {
-                  "componentInputParameter": "custom_job_service_account"
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "734227425472-compute@developer.gserviceaccount.com"
+                    }
+                  }
                 },
                 "data_pipeline_root": {
                   "componentInputParameter": "data_pipeline_root"
@@ -396,40 +1585,83 @@
                 "data_region": {
                   "componentInputParameter": "data_region"
                 },
-                "hp_config_max_trials": {
-                  "componentInputParameter": "hp_config_max_trials"
-                },
-                "hp_config_suggestions_per_request": {
-                  "componentInputParameter": "hp_config_suggestions_per_request"
-                },
-                "hptune_region": {
-                  "componentInputParameter": "hptune_region"
-                },
-                "input_data_schema": {
-                  "componentInputParameter": "training_data_schema"
-                },
-                "machine_type": {
-                  "componentInputParameter": "machine_type"
-                },
-                "output_model_file_name": {
-                  "componentInputParameter": "output_model_file_name"
+                "hpo_container_image_uri": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "australia-southeast1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/hpo:latest"
+                    }
+                  }
                 },
                 "project_id": {
                   "componentInputParameter": "project_id"
                 },
-                "serving_container_image_uri": {
-                  "componentInputParameter": "serving_container_image_uri"
-                },
-                "training_container_image_uri": {
-                  "componentInputParameter": "training_container_image_uri"
-                },
-                "vpc_network": {
-                  "componentInputParameter": "vpc_network"
+                "warehouse": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "EC"
+                    }
+                  }
                 }
               }
             },
             "taskInfo": {
-              "name": "train-model"
+              "name": "worker-pool-specs"
+            }
+          },
+          "worker-pool-specs-2": {
+            "cachingOptions": {
+              "enableCache": true
+            },
+            "componentRef": {
+              "name": "comp-worker-pool-specs-2"
+            },
+            "dependentTasks": [
+              "data-preprocess"
+            ],
+            "inputs": {
+              "artifacts": {
+                "input_dataset": {
+                  "taskOutputArtifact": {
+                    "outputArtifactKey": "output_dataset",
+                    "producerTask": "data-preprocess"
+                  }
+                }
+              },
+              "parameters": {
+                "custom_job_service_account": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "734227425472-compute@developer.gserviceaccount.com"
+                    }
+                  }
+                },
+                "data_pipeline_root": {
+                  "componentInputParameter": "data_pipeline_root"
+                },
+                "data_region": {
+                  "componentInputParameter": "data_region"
+                },
+                "hpo_container_image_uri": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "australia-southeast1-docker.pkg.dev/petcircle-science-playground/mlops-vertex-kit/hpo:latest"
+                    }
+                  }
+                },
+                "project_id": {
+                  "componentInputParameter": "project_id"
+                },
+                "warehouse": {
+                  "runtimeValue": {
+                    "constantValue": {
+                      "stringValue": "MEL"
+                    }
+                  }
+                }
+              }
+            },
+            "taskInfo": {
+              "name": "worker-pool-specs-2"
             }
           }
         }

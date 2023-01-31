@@ -38,6 +38,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.backend import clear_session
 
 import pickle
+from google.cloud import firestore
 # pylint: disable=logging-fstring-interpolation
 
 
@@ -87,6 +88,22 @@ def _save_analysis_schema(df: pd.DataFrame, model_store: str):
 
     with tf.io.gfile.GFile(file_path, 'w') as file:
         yaml.dump(spec, file)
+        
+
+def query_from_firestore(project_id, solution_name='hpo-pipeline-template'):
+    db = firestore.Client(project=project_id)
+
+    docs = db.collection('models').document(solution_name).collection("HPO").list_documents()
+    docs_latest = max([doc.id for doc in docs])
+
+    warehouses = [i.id for i in db.collection('models').document(solution_name).collection("HPO").document(docs_latest).collections()]
+
+    hpo_warehouses = {}
+    for warehouse in warehouses:
+        param = db.collection('models').document(solution_name).collection("HPO").document(docs_latest).collection(warehouse).document("params")
+        hpo_warehouses.update({warehouse: param.get().to_dict()})
+        
+    return hpo_warehouses
 
 
 ################################################################################
@@ -163,7 +180,8 @@ def tf_training(text_train_padded: np.ndarray,
                 y_train: pd.core.series.Series,
                 y_val: pd.core.series.Series,
                 vocab_size: int,
-                seq_len: int
+                seq_len: int,
+                args: argparse.Namespace
                 ) -> Model:
     """Train lgb model given datasets and parameters."""
     # build the model
@@ -190,7 +208,7 @@ def tf_training(text_train_padded: np.ndarray,
 
     model.compile(loss='binary_crossentropy',
                   metrics=[balanced_acc, balanced_acc_diff],
-                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.0005))
+                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001))
 
     pos = y_train.value_counts().loc[1]
     neg = y_train.value_counts().loc[0]
@@ -210,7 +228,7 @@ def tf_training(text_train_padded: np.ndarray,
     )
 
     # train the model
-    model.fit(text_train_padded, y_train, epochs=10, batch_size=32,
+    model.fit(text_train_padded, y_train, epochs=3, batch_size=32,
               validation_data=(text_val_padded, y_val),
               class_weight=class_weight,
               verbose=2, callbacks=[es])
@@ -236,6 +254,10 @@ def train(args: argparse.Namespace):
     logging.info(f'AIP_MODEL_DIR: {output_model_directory}')
     logging.info(f'training_data_uri: {args.training_data_uri}')
     logging.info(f'metrics_output_uri: {args.metrics_output_uri}')
+    
+    logging.info('Getting HPO params...')
+    hpo_warehouses = query_from_firestore(args.hp_config_gcp_project_id)
+    logging.info(f'HPO_params: {hpo_warehouses}')
 
     # prepare the data
     df = load_csv_dataset(data_uri_pattern=args.training_data_uri)
@@ -269,7 +291,8 @@ def train(args: argparse.Namespace):
                         y_train=y_train,
                         y_val=y_val,
                         vocab_size=len(tknz.word_index)+1,
-                        seq_len=maxlen)
+                        seq_len=maxlen,
+                       args=args)
 
     # save the generated model
     logging.info('Saving training artifacts..')
@@ -300,7 +323,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--metrics_output_uri', type=str,
                         help='The GCS artifact URI to write model metrics.')
+    
+    # parser.add_argument('--val_balanced_acc', default=1.0, type=float,
+    #            help='hpo metric')
     # For model hyperparameter
+    # parser.add_argument('--batch_size', default=128, type=float,
+    #                 help='Number of data samples contained in each batch.')
+    # parser.add_argument('--lr', default=0.01, type=float,
+    #             help='learning rate')
     parser.add_argument('--min_data_in_leaf', default=5, type=float,
                         help='Minimum number of observations that must '
                              'fall into a tree node for it to be added.')
